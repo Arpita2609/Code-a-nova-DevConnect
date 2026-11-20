@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  password     String
+  headline     String         @default("Developer")
+  bio          String         @default("")
+  location     String         @default("")
+  skills       String         @default("")
+  github       String         @default("")
+  linkedin     String         @default("")
+  createdAt    DateTime       @default(now())
+  projects     Project[]
+  posts        BlogPost[]
+  sentRequests Connection[]   @relation("SentRequests")
+  receivedRequests Connection[] @relation("ReceivedRequests")
+  endorsements Endorsement[]  @relation("EndorsedUser")
+  givenEndorsements Endorsement[] @relation("Endorser")
+  notifications Notification[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  techStack   String   @default("")
+  link        String   @default("")
+  createdAt   DateTime @default(now())
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model BlogPost {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model Connection {
+  id          String   @id @default(cuid())
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  senderId    String
+  receiverId  String
+  sender      User     @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  @@unique([senderId, receiverId])
+}
+
+model Endorsement {
+  id          String   @id @default(cuid())
+  skill       String
+  createdAt   DateTime @default(now())
+  userId      String
+  endorserId  String
+  user        User     @relation("EndorsedUser", fields: [userId], references: [id], onDelete: Cascade)
+  endorser    User     @relation("Endorser", fields: [endorserId], references: [id], onDelete: Cascade)
+  @@unique([userId, endorserId, skill])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
